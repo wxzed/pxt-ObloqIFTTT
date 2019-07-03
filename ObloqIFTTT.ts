@@ -18,8 +18,8 @@
 const OBLOQ_DEBUG = false
 const OBLOQ_MQTT_DEFAULT_SERVER = true
 //DFRobot easy iot
-const OBLOQ_MQTT_EASY_IOT_SERVER_CHINA = "iot.dfrobot.com.cn"
-const OBLOQ_MQTT_EASY_IOT_SERVER_GLOBAL = "iot.dfrobot.com"
+const OBLOQ_MQTT_EASY_IOT_SERVER_CHINA = "mqtt.beebotte.com"
+const OBLOQ_MQTT_EASY_IOT_SERVER_GLOBAL = "mqtt.beebotte.com"
 const OBLOQ_MQTT_EASY_IOT_PORT = 1883
 //other iot
 const OBLOQ_MQTT_USER_IOT_SERVER = "---.-----.---"
@@ -50,7 +50,7 @@ enum TOPIC {
 /**
  *Obloq implementation method.
  */
-//% weight=10 color=#008B00 icon="\uf1eb" block="Obloq"
+//% weight=10 color=#008B00 icon="\uf1eb" block="ObloqIFTTT"
 namespace ObloqIFTTT {
 
     //serial
@@ -92,6 +92,9 @@ namespace ObloqIFTTT {
     let OBLOQ_WORKING_MODE_IS_HTTP = OBLOQ_BOOL_TYPE_IS_FALSE
     let OBLOQ_WORKING_MODE_IS_STOP = OBLOQ_BOOL_TYPE_IS_TRUE
 
+    let OBLOQ_WEBHOOKS_URL = "maker.ifttt.com"
+    let OBLOQ_WEBHOOKS_KEY = ""
+    let OBLOQ_WEBHOOKS_EVENT = ""
 
     export enum SERVERS {
         //% blockId=SERVERS_China block="China"
@@ -400,8 +403,8 @@ namespace ObloqIFTTT {
      * Two parallel stepper motors are executed simultaneously(DegreeDual).
      * @param SSID to SSID ,eg: "yourSSID"
      * @param PASSWORD to PASSWORD ,eg: "yourPASSWORD"
-     * @param IP to IP ,eg: "0.0.0.0"
-     * @param PORT to PORT ,eg: 80
+     * @param EVENT to EVENT ,eg: "yourEvent"
+     * @param KEY to KEY ,eg: "yourKey"
      * @param receive to receive ,eg: SerialPin.P1
      * @param send to send ,eg: SerialPin.P2
     */
@@ -409,15 +412,15 @@ namespace ObloqIFTTT {
     //% receive.fieldEditor="gridpicker" receive.fieldOptions.columns=3
     //% send.fieldEditor="gridpicker" send.fieldOptions.columns=3
     //% blockId=Obloq_http_setup
-    //% block="Obloq setup http | Pin set: | receiving data (green wire): %receive| sending data (blue wire): %send | Wi-Fi: | name: %SSID| password: %PASSWORD| http config: | ip: %IP| port: %PORT | start connection"
+    //% block="Webhooks http set|Pin set:|receiving data (green wire): %receive|sending data (blue wire): %send|Wi-Fi:|name: %SSID|password: %PASSWORD|Webhooks config:|event: %EVENT|key: %KEY|start connection"
     export function Obloq_http_setup(/*serial*/receive: SerialPin, send: SerialPin,
                                      /*wifi*/SSID: string, PASSWORD: string,
-                                     /*mqtt*/IP: string, PORT: number):
+        EVENT: string, KEY: string):
         void {
         OBLOQ_WIFI_SSID = SSID
         OBLOQ_WIFI_PASSWORD = PASSWORD
-        OBLOQ_HTTP_IP = IP
-        OBLOQ_HTTP_PORT = PORT
+        OBLOQ_WEBHOOKS_EVENT = EVENT
+        OBLOQ_WEBHOOKS_KEY = KEY
         OBLOQ_SERIAL_TX = send
         OBLOQ_SERIAL_RX = receive
         Obloq_serial_init()
@@ -428,8 +431,8 @@ namespace ObloqIFTTT {
      * Two parallel stepper motors are executed simultaneously(DegreeDual).
      * @param SSID to SSID ,eg: "yourSSID"
      * @param PASSWORD to PASSWORD ,eg: "yourPASSWORD"
-     * @param IOT_ID to IOT_ID ,eg: "yourIotId"
-     * @param IOT_PWD to IOT_PWD ,eg: "yourIotPwd"
+     * @param API_KEY to API_KEY ,eg: "yourApiKey"
+     * @param SECRET_KEY to SECRET_KEY ,eg: "yourSecretKey"
      * @param IOT_TOPIC to IOT_TOPIC ,eg: "yourIotTopic"
      * @param receive to receive ,eg: SerialPin.P1
      * @param send to send ,eg: SerialPin.P2
@@ -439,21 +442,20 @@ namespace ObloqIFTTT {
     //% send.fieldEditor="gridpicker" send.fieldOptions.columns=3
     //% SERVER.fieldEditor="gridpicker" SERVER.fieldOptions.columns=2
     //% blockId=Obloq_mqtt_setup
-    //% block="Obloq setup mqtt | Pin set: | receiving data (green wire): %receive| sending data (blue wire): %send | Wi-Fi: | name: %SSID| password: %PASSWORD| IoT service: | Iot_id: %IOT_ID| Iot_pwd: %IOT_PWD| (default topic_0) Topic: %IOT_TOPIC | start connection: | Servers: %SERVER"
+    //% block="Beebotte setup mqtt|Pin set:|receiving data (green wire): %receive|sending data (blue wire): %send|Wi-Fi:|name: %SSID|password: %PASSWORD|Beebotte service:|API Key: %API_KEY|Secret Key: %SECRET_KEY|(default topic_0) Topic: %IOT_TOPIC|start connection"
     export function Obloq_mqtt_setup(/*serial*/receive: SerialPin, send: SerialPin,
                                      /*wifi*/SSID: string, PASSWORD: string,
-                                     /*mqtt*/IOT_ID: string, IOT_PWD: string, IOT_TOPIC: string,
-                                     /*connect*/SERVER: SERVERS):
+                                     /*mqtt*/API_KEY: string, SECRET_KEY: string, IOT_TOPIC: string):
         void {
         OBLOQ_WIFI_SSID = SSID
         OBLOQ_WIFI_PASSWORD = PASSWORD
-        OBLOQ_MQTT_PWD = IOT_PWD
-        OBLOQ_MQTT_ID = IOT_ID
+        OBLOQ_MQTT_PWD = SECRET_KEY
+        OBLOQ_MQTT_ID = API_KEY
         OBLOQ_MQTT_TOPIC[0][0] = IOT_TOPIC
         OBLOQ_SERIAL_TX = send
         OBLOQ_SERIAL_RX = receive
         Obloq_serial_init()
-        Obloq_start_connect_mqtt(SERVER, "connect wifi")
+        Obloq_start_connect_mqtt(SERVERS.Global, "connect wifi")
     }
 
     /**
@@ -905,9 +907,9 @@ namespace ObloqIFTTT {
     */
     //% weight=79
     //% blockId=Obloq_http_get
-    //% block="http(get) | url %url| timeout(ms) %time"
+    //% block="IFTTT(get) | value1 %value1| value2 %value2| value3 %value3|timeout(ms) %time"
     //% advanced=false
-    export function Obloq_http_get(url: string, time: number): string {
+    export function Obloq_http_get(value1: string, value2: string, value3: string, time: number): string {
         while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
         if (!OBLOQ_HTTP_INIT)
             return OBLOQ_STR_TYPE_IS_NONE
@@ -915,9 +917,13 @@ namespace ObloqIFTTT {
         if (!OBLOQ_SERIAL_INIT) {
             Obloq_serial_init()
         }
-        obloqWriteString("|3|1|http://" + OBLOQ_HTTP_IP + ":" + OBLOQ_HTTP_PORT + "/" + url + "|\r")
-
-        return Obloq_http_wait_request(time)
+        obloqWriteString("|3|1|http://" + OBLOQ_WEBHOOKS_URL + "/trigger/" + OBLOQ_WEBHOOKS_EVENT + "/with/key/" + OBLOQ_WEBHOOKS_KEY + "?value1=" + value1 + "&value2=" + value2 + "&value3=" + value3 + "|\r")
+        let ret = ""
+        ret = Obloq_http_wait_request(time)
+        if (ret == "Congratulations! You've fired the testObloq event") {
+            ret = "OK"
+        }
+        return ret
     }
 
     /**
@@ -927,8 +933,8 @@ namespace ObloqIFTTT {
     */
     //% weight=78
     //% blockId=Obloq_http_post
-    //% block="http(post) | url %url| content %content| timeout(ms) %time"
-    export function Obloq_http_post(url: string, content: string, time: number): string {
+    //% block="IFTTT(post) | value1 %value1| value2 %value2| value3 %value3| timeout(ms) %time"
+    export function Obloq_http_post(value1: string, value2: string, value3: string, time: number): string {
         while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
         if (!OBLOQ_HTTP_INIT)
             return OBLOQ_STR_TYPE_IS_NONE
@@ -936,32 +942,14 @@ namespace ObloqIFTTT {
         if (!OBLOQ_SERIAL_INIT) {
             Obloq_serial_init()
         }
-        obloqWriteString("|3|2|http://" + OBLOQ_HTTP_IP + ":" + OBLOQ_HTTP_PORT + "/" + url + "," + content + "|\r")
-
-        return Obloq_http_wait_request(time)
-    }
-
-
-    /**
-     * The HTTP put request,Obloq.put() can only be used for http protocol!
-     * url(string): URL; content(string):content; time(ms): private long maxWait
-     * @param time set timeout, eg: 10000
-    */
-    //% weight=77
-    //% blockId=Obloq_http_put
-    //% block="http(put) | url %url| content %content| timeout(ms) %time"
-    export function Obloq_http_put(url: string, content: string, time: number): string {
-        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
-        if (!OBLOQ_HTTP_INIT)
-            return OBLOQ_STR_TYPE_IS_NONE
-
-        if (!OBLOQ_SERIAL_INIT) {
-            Obloq_serial_init()
+        obloqWriteString("|3|2|http://" + OBLOQ_WEBHOOKS_URL + "/trigger/" + OBLOQ_WEBHOOKS_EVENT + "/with/key/" + OBLOQ_WEBHOOKS_KEY + ",{\"value1\":\""+value1+"\",\"value2\":\""+value2+"\",\"value3\":\""+value3+"\" }"+"|\r")
+        let ret = Obloq_http_wait_request(time)
+        if (ret == "Congratulations! You've fired the testObloq event"){
+            ret = "OK"
         }
-        obloqWriteString("|3|3|http://" + OBLOQ_HTTP_IP + ":" + OBLOQ_HTTP_PORT + "/" + url + "," + content + "|\r")
-
-        return Obloq_http_wait_request(time)
+        return ret
     }
+
 
 
 

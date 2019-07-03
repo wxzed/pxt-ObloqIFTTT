@@ -20,5 +20,6 @@
         "httpTest.ts"
     ],
     "public": true,
-    "installedVersion": "workspace:dee399dd-48f4-4833-bae7-879f736bfe46"
+    "installedVersion": "workspace:952c6f69-bdcf-44c9-1e62-187cd82ada63",
+    "preferredEditor": "tsprj"
 }
